@@ -1,0 +1,68 @@
+# IDE / editor
+.idea/
+
+# dotenv
+.env
+/logs
+logs
+# virtualenv
+.venv/
+venv/
+ENV/
+/.github
+
+# Ignore all migration files but keep __init__.py
+*/migrations/*
+!*/migrations/__init__.py
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+/media/
+/mediafiles
+mediafiles/
+staticfiles/
+static/
+
+# Logs
+*.log
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.github
+# Jupyter
+*.ipynb_checkpoints
+eslatmalar.txt
+venv
+

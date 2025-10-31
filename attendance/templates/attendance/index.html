@@ -1,0 +1,154 @@
+<!-- attendance/templates/attendance/index.html (YANGILANGAN) -->
+{% extends "attendance/base.html" %}
+{% block title %}Bosh sahifa - FaceID{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h1 class="display-6 text-primary">
+      <i class="bi bi-house-check"></i> FaceID Davomat Tizimi
+    </h1>
+    <p class="text-muted">Yuzni tanish texnologiyasi asosida avtomatik davomat tizimi</p>
+  </div>
+</div>
+
+<!-- Statistikalar -->
+<div class="row mb-5">
+  <div class="col-md-4">
+    <div class="card stats-card border-primary">
+      <div class="card-body text-center">
+        <h3 class="text-primary">{{ stats.total }}</h3>
+        <p class="text-muted mb-0">Jami xodimlar</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stats-card border-success">
+      <div class="card-body text-center">
+        <h3 class="text-success">{{ stats.checked_in_today }}</h3>
+        <p class="text-muted mb-0">Bugun kelgan</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stats-card border-warning">
+      <div class="card-body text-center">
+        <h3 class="text-warning">{{ stats.remaining_today }}</h3>
+        <p class="text-muted mb-0">Kutmoydigan</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tezkor amallar -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-lightning"></i> Tezkor Amallar
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2 d-md-flex">
+          <a href="{% url 'attendance:capture' %}" class="btn btn-primary btn-lg me-md-2">
+            <i class="bi bi-camera"></i> Davomat qilish
+          </a>
+          <a href="{% url 'attendance:enroll' %}" class="btn btn-success btn-lg me-md-2">
+            <i class="bi bi-person-plus"></i> Xodim qo'shish
+          </a>
+          <a href="{% url 'attendance:report' %}" class="btn btn-info btn-lg">
+            <i class="bi bi-clipboard-data"></i> Hisobot ko'rish
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Xodimlar ro'yxati -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+          <i class="bi bi-people"></i> Faol Xodimlar
+        </h5>
+        <span class="badge bg-primary">{{ employees.count }}</span>
+      </div>
+      <div class="card-body p-0">
+        {% if employees %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ism</th>
+                <th>Email</th>
+                <th>Lavozim</th>
+                <th>Yuz kodlari</th>
+                <th>Amallar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for employee in employees %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    {% if employee.photo %}
+                    <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}" 
+                         class="rounded-circle me-2" width="32" height="32">
+                    {% else %}
+                    <div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" 
+                         style="width: 32px; height: 32px;">
+                      <i class="bi bi-person text-white"></i>
+                    </div>
+                    {% endif %}
+                    {{ employee.full_name }}
+                  </div>
+                </td>
+                <td>{{ employee.email }}</td>
+                <td>
+                  {% if employee.position %}
+                  <span class="badge bg-secondary">{{ employee.position }}</span>
+                  {% else %}
+                  <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge {% if employee.encodings.count > 0 %}bg-success{% else %}bg-warning{% endif %}">
+                    {{ employee.encodings.count }} ta
+                  </span>
+                </td>
+                <td>
+                  <div class="btn-group btn-group-sm">
+                    <a href="{% url 'attendance:enroll_images' employee.id %}" 
+                       class="btn btn-outline-primary" title="Yuz kodini qo'shish">
+                      <i class="bi bi-camera"></i>
+                    </a>
+                    {% if employee.encodings.count > 0 %}
+                    <a href="{% url 'attendance:capture' %}?test_employee={{ employee.id }}" 
+                       class="btn btn-outline-success" title="Test qilish">
+                      <i class="bi bi-check-circle"></i>
+                    </a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="bi bi-people display-1 text-muted"></i>
+          <p class="text-muted mt-3">Hozircha xodimlar mavjud emas</p>
+          <a href="{% url 'attendance:enroll' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i> Birinchi xodimni qo'shing
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

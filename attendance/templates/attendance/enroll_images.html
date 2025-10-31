@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ employee.full_name }} - Yuz Kodlarini Qo'shish</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        #video { border: 3px solid #333; border-radius: 10px; background: #000; width: 640px; height: 480px; }
+        button { padding: 12px 24px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-start { background: #28a745; color: white; }
+        .btn-add { background: #007bff; color: white; }
+        .btn-stop { background: #dc3545; color: white; }
+        .status { padding: 12px; margin: 15px; border-radius: 6px; font-weight: bold; }
+        .active { background: #d4edda; color: #155724; }
+        .inactive { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👤 {{ employee.full_name }} - Yuz Kodlarini Qo'shish</h1>
+
+        <div style="margin: 20px 0;">
+            <a href="/">🏠 Bosh Sahifa</a> |
+            <a href="/enroll/">👤 Yangi Xodim</a> |
+            <a href="/capture/">📸 Davomat</a>
+        </div>
+
+        <div style="margin: 20px;">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+        </div>
+
+        <div>
+            <button id="startBtn" class="btn-start">🎬 Kamerni Yoqish</button>
+            <button id="addBtn" class="btn-add">📸 Yuz Kodini Qo'shish</button>
+            <button id="stopBtn" class="btn-stop">⏹️ To'xtatish</button>
+        </div>
+
+        <div id="status" class="status inactive">
+            🔴 Kamera faol emas
+        </div>
+
+        <div id="result" style="margin:20px; padding:15px; border:1px solid #ddd; border-radius:5px;">
+            Yuz kodi qo'shish natijalari bu yerda ko'rinadi
+        </div>
+
+        <div style="text-align: left; margin: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+            <h3>Mavjud Yuz Kodlari: {{ encodings.count }} ta</h3>
+            {% for encoding in encodings %}
+                <div style="margin: 10px 0; padding: 10px; border: 1px solid #eee;">
+                    <strong>Encoding #{{ forloop.counter }}</strong>
+                    {% if encoding.is_primary %}<span style="color: green;">(Asosiy)</span>{% endif %}
+                    - {{ encoding.created_at|date:"Y-m-d H:i" }}
+                </div>
+            {% empty %}
+                <p>❌ Hali yuz kodi qo'shilmagan. Kamera orqali yuzingizni qo'shing.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        let videoStream = null;
+        let isCameraOn = false;
+
+        // Kamera yoqish
+        async function startCamera() {
+            try {
+                console.log("🎬 Kamera yoqilmoqda...");
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 },
+                    audio: false
+                });
+
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                videoStream = stream;
+                isCameraOn = true;
+
+                document.getElementById('status').innerHTML = '🟢 Kamera faol';
+                document.getElementById('status').className = 'status active';
+                console.log("✅ Kamera yoqildi");
+
+            } catch (error) {
+                console.error("❌ Kamera xatosi:", error);
+                alert("Kamera ochishda xatolik: " + error.message);
+            }
+        }
+
+        // Kamera to'xtatish
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            isCameraOn = false;
+            document.getElementById('status').innerHTML = '🔴 Kamera faol emas';
+            document.getElementById('status').className = 'status inactive';
+            console.log("🛑 Kamera to'xtatildi");
+        }
+
+        // Surat olish
+        function capturePhoto() {
+            if (!isCameraOn) {
+                alert("❌ Iltimos, avval kamerni yoqing.");
+                return null;
+            }
+
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            return canvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        // Yuz kodini qo'shish
+        async function addFaceEncoding() {
+            console.log("🎯 Yuz kodi qo'shilmoqda...");
+
+            const imageData = capturePhoto();
+            if (!imageData) return;
+
+            document.getElementById('result').innerHTML = '<p>⏳ Yuz kodi qoʻshilmoqda...</p>';
+
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                console.log("📡 Serverga so'rov yuborilmoqda...");
+
+                const response = await fetch('', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: 'photo=' + encodeURIComponent(imageData)
+                });
+
+                const data = await response.json();
+                console.log("📊 Server javobi:", data);
+
+                if (data.success) {
+                    document.getElementById('result').innerHTML = `<p style="color: green;">✅ ${data.message}</p>`;
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">❌ ${data.message}</p>`;
+                }
+
+            } catch (error) {
+                console.error('❌ Xatolik:', error);
+                document.getElementById('result').innerHTML = `<p style="color: red;">❌ Xatolik: ${error.message}</p>`;
+            }
+        }
+
+        // Tugmalarni bog'lash
+        document.getElementById('startBtn').addEventListener('click', startCamera);
+        document.getElementById('addBtn').addEventListener('click', addFaceEncoding);
+        document.getElementById('stopBtn').addEventListener('click', stopCamera);
+
+        console.log("✅ Sahifa yuklandi - Xodim: {{ employee.full_name }}");
+    </script>
+</body>
+</html>

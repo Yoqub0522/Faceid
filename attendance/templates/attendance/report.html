@@ -1,0 +1,152 @@
+<!-- attendance/templates/attendance/report.html (YANGILANGAN) -->
+{% extends "attendance/base.html" %}
+{% block title %}Hisobot - FaceID{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card shadow">
+      <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+        <h4 class="card-title mb-0">
+          <i class="bi bi-clipboard-data"></i> Davomat Hisoboti
+        </h4>
+        <span class="badge bg-light text-dark">{{ total_count }} ta yozuv</span>
+      </div>
+      <div class="card-body">
+        <!-- Filtr formasi -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title">Filtr</h6>
+                <form method="get" class="row g-3">
+                  <div class="col-md-3">
+                    <label class="form-label">Dan</label>
+                    {{ form.date_from }}
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Gacha</label>
+                    {{ form.date_to }}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Xodim</label>
+                    {{ form.employee }}
+                  </div>
+                  <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                      <i class="bi bi-filter"></i> Filtrlash
+                    </button>
+                  </div>
+                </form>
+                {% if request.GET %}
+                <div class="mt-2">
+                  <a href="{% url 'attendance:report' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Filtrni tozalash
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hisobot jadvali -->
+        {% if attendances %}
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Xodim</th>
+                <th>Sana</th>
+                <th>Kirish vaqti</th>
+                <th>Chiqish vaqti</th>
+                <th>Davomiylik</th>
+                <th>Holati</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for attendance in attendances %}
+              <tr>
+                <td>
+                  <div class="d-flex align-items-center">
+                    {% if attendance.employee.photo %}
+                    <img src="{{ attendance.employee.photo.url }}" 
+                         alt="{{ attendance.employee.full_name }}"
+                         class="rounded-circle me-2" width="32" height="32">
+                    {% else %}
+                    <div class="rounded-circle bg-secondary me-2 d-flex align-items-center justify-content-center" 
+                         style="width: 32px; height: 32px;">
+                      <i class="bi bi-person text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                      <div class="fw-bold">{{ attendance.employee.full_name }}</div>
+                      <small class="text-muted">{{ attendance.employee.position|default:"—" }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="fw-bold">{{ attendance.date }}</span>
+                  <br>
+                  <small class="text-muted">{{ attendance.date|date:"l" }}</small>
+                </td>
+                <td>
+                  {% if attendance.check_in %}
+                  <span class="text-success">
+                    {{ attendance.check_in|time:"H:i" }}
+                  </span>
+                  {% else %}
+                  <span class="text-danger">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if attendance.check_out %}
+                  <span class="text-info">
+                    {{ attendance.check_out|time:"H:i" }}
+                  </span>
+                  {% else %}
+                  <span class="text-warning">Hali kelmagan</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if attendance.duration %}
+                  <span class="badge bg-primary">{{ attendance.duration }} soat</span>
+                  {% else %}
+                  <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if attendance.check_in and attendance.check_out %}
+                  <span class="badge bg-success">Yakunlangan</span>
+                  {% elif attendance.check_in %}
+                  <span class="badge bg-warning">Ishlayapti</span>
+                  {% else %}
+                  <span class="badge bg-danger">Kelgani yo'q</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination yoki cheklov xabari -->
+        {% if total_count >= 500 %}
+        <div class="alert alert-warning mt-3">
+          <i class="bi bi-exclamation-triangle"></i>
+          Faqat oxirgi 500 ta yozuv ko'rsatilmoqda. Aniqroq natija uchun filtrlardan foydalaning.
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-inbox display-1 text-muted"></i>
+          <h5 class="text-muted mt-3">Hech qanday yozuv topilmadi</h5>
+          <p class="text-muted">Filtr sozlamalarini o'zgartirib ko'ring</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "attendance/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>🎯 Xodim qoʻshish</h3>
+
+    <!-- Debug messages -->
+    {% if messages %}
+    <div class="alert alert-info">
+        <h5>System Messages:</h5>
+        <ul>
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="mt-4">
+        {% csrf_token %}
+
+        <!-- Form errors -->
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <h5>Form xatoliklari:</h5>
+            <ul>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <li><strong>{{ field }}:</strong> {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="mb-3">
+            <label class="form-label">To'liq ism *</label>
+            <input class="form-control" name="full_name" type="text" required
+                   placeholder="To'liq ism familiya" value="{{ form.full_name.value|default:'' }}">
+            <small class="form-text text-muted">Kamida 3 ta belgi bo'lishi kerak</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email (ixtiyoriy)</label>
+            <input class="form-control" name="email" type="email"
+                   placeholder="email@example.com" value="{{ form.email.value|default:'' }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Lavozim (ixtiyoriy)</label>
+            <input class="form-control" name="position" type="text"
+                   placeholder="Lavozim" value="{{ form.position.value|default:'' }}">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rasm (ixtiyoriy)</label>
+            <input class="form-control" name="photo" type="file" accept="image/*">
+        </div>
+
+        <button class="btn btn-success" type="submit">✅ Xodimni Qoʻshish</button>
+        <a href="{% url 'attendance:index' %}" class="btn btn-secondary">🏠 Bosh Sahifa</a>
+    </form>
+</div>
+{% endblock %}
