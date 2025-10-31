@@ -126,12 +126,15 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Media sozlamalari
-STATIC_URL = 'static/'
+# Static fayllar uchun
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']  # bu loyihadagi static papka
+STATIC_ROOT = BASE_DIR / 'staticfiles'    # collectstatic natijasi
+
+# Media fayllar
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-STATIC_ROOT = os.environ.get('STATIC_ROOT', os.path.join(BASE_DIR, 'staticfiles'))
 
 # messages
 from django.contrib.messages import constants as messages

@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+{% load static %}
+
 <html>
 <head>
     <title>Davomat - Kamera</title>
@@ -129,7 +131,7 @@
         </div>
     </div>
 
-    <script src="/static/attendance/js/webcam.js"></script>
+    <script src="{% static 'attendance/js/webcam.js' %}"></script>
     <script>
         // Sahifa yuklanganda kamera holatini tekshirish
         document.addEventListener('DOMContentLoaded', function() {
