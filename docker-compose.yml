@@ -17,7 +17,7 @@ services:
   backend:
     build: .
     container_name: faceid-backend-1
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn faceid_mvt.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
       - static_volume:/app/static
@@ -50,6 +50,13 @@ services:
     depends_on:
       - backend
     restart: always
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/certbot:/var/www/certbot
+
 
 volumes:
   postgres_data:

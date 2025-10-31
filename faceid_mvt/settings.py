@@ -7,16 +7,14 @@ env = environ.Env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-SECRET_KEY = env.str("DJANGO_SECRET", '')
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool("DEBUG", default=True)
 
 
-
-ALLOWED_HOSTS = []
+SECRET_KEY = 'replace-this-with-secure-key'
+DEBUG = True
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
+    "jazzmin",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -129,13 +127,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
 # Media sozlamalari
+STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Static sozlamalari
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.environ.get('STATIC_ROOT', os.path.join(BASE_DIR, 'staticfiles'))
+
 # messages
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
@@ -146,3 +143,32 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 FACE_DISTANCE_THRESHOLD = 0.7
+
+JAZZMIN_SETTINGS = {
+    "site_title": "EduEyes Admin",
+    "site_header": "EduEyes",
+    "site_brand": "EduEyes.io",
+    "welcome_sign": "Xush kelibsiz, admin!",
+    "copyright": "© EduEyes",
+    "show_ui_builder": True,  # UI builder’ni yoqadi
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "theme": "cerulean",   # boshqa variantlar: darkly, cerulean, cosmo, minty ...
+    "navbar_fixed": True,
+    "sidebar_fixed": True,
+    "show_ui_builder": True,
+}
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = [
+
+    'https://faceid.yoqubaxmedov.xyz',
+]
+
+CORS_ALLOWED_ORIGINS = [
+
+    "https://faceid.yoqubaxmedov.xyz",
+
+
+]

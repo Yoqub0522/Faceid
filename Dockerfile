@@ -4,10 +4,11 @@ FROM python:3.11-slim
 # 2️⃣ Ishchi papka
 WORKDIR /app
 
-# 3️⃣ Tizim kutubxonalari
+# 3️⃣ Tizim kutubxonalari (OpenCV uchun ham kerakli kutubxonalar bilan)
 RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev gcc && \
-    apt-get clean
+    build-essential libpq-dev gcc \
+    libgl1 libglib2.0-0 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 4️⃣ Python kutubxonalarini o‘rnatish
 COPY requirements.txt .
@@ -23,6 +24,8 @@ COPY . .
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# 7️⃣ Static fayllarni to‘plash
+RUN python manage.py collectstatic --noinput || true
 # 7️⃣ Django port
 EXPOSE 8000
 
