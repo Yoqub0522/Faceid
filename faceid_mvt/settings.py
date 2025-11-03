@@ -145,7 +145,7 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-FACE_DISTANCE_THRESHOLD = 0.7
+FACE_DISTANCE_THRESHOLD = 1
 
 JAZZMIN_SETTINGS = {
     "site_title": "EduEyes Admin",

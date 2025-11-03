@@ -1,4 +1,4 @@
-// static/attendance/js/webcam.js (YANGILANGAN - DAVOMAT TUGMASI UCHUN)
+//static/attendance/js/webcam.js
 let video = null;
 let canvas = null;
 let context = null;
