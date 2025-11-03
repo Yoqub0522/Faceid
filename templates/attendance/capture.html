@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-{% load static %}
-
 <html>
 <head>
     <title>Davomat - Kamera</title>
@@ -29,6 +27,8 @@
             border-radius: 10px;
             max-width: 100%;
             background: #000;
+            width: 640px;
+            height: 480px;
         }
         #canvas {
             display: none;
@@ -116,10 +116,10 @@
         </div>
 
         <div class="controls">
-            <button onclick="startWebcam()" class="btn-start">🎬 Kamerni Yoqish</button>
-            <button onclick="captureAndSend()" class="btn-capture">📸 Davomat Qilish</button>
-            <button onclick="restartWebcam()" class="btn-restart">🔄 Qayta Ishga Tushirish</button>
-            <button onclick="stopWebcam()" class="btn-stop">⏹️ To'xtatish</button>
+            <button id="startBtn" class="btn-start">🎬 Kamerni Yoqish</button>
+            <button id="captureBtn" class="btn-capture">📸 Davomat Qilish</button>
+            <button id="restartBtn" class="btn-restart">🔄 Qayta Ishga Tushirish</button>
+            <button id="stopBtn" class="btn-stop">⏹️ To'xtatish</button>
         </div>
 
         <div id="status" class="status status-inactive">
@@ -131,29 +131,203 @@
         </div>
     </div>
 
-    <script src="{% static 'attendance/js/webcam.js' %}"></script>
     <script>
-        // Sahifa yuklanganda kamera holatini tekshirish
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log("📄 Davomat sahifasi yuklandi");
-            // Avtomatik ishga tushirish o'rniga foydalanuvchi bosishi kerak
-        });
+        // ========== CAPTURE.HTML UCHUN JAVASCRIPT KODI ==========
+        let video = null;
+        let canvas = null;
+        let context = null;
+        let stream = null;
+        let isCameraActive = false;
 
-        // Status yangilash funksiyasi
+        // 🎥 Kamerani ishga tushurish
+        function startWebcam() {
+            console.log("🔍 startWebcam() funksiyasi chaqirildi");
+
+            video = document.getElementById("video");
+            canvas = document.getElementById("canvas");
+
+            if (!video || !canvas) {
+                alert("Video yoki canvas elementi topilmadi.");
+                return;
+            }
+
+            context = canvas.getContext("2d");
+
+            if (!navigator.mediaDevices?.getUserMedia) {
+                alert("Brauzeringiz kamera funksiyasini qoʻllab-quvvatlamaydi.");
+                return;
+            }
+
+            if (stream) {
+                stopWebcam();
+            }
+
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            })
+            .then((mediaStream) => {
+                console.log("✅ Kamera ruhsat berildi");
+                stream = mediaStream;
+                video.srcObject = mediaStream;
+                isCameraActive = true;
+
+                video.onloadedmetadata = () => {
+                    console.log("✅ Kamera ishga tushdi");
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    updateStatus();
+                };
+
+            })
+            .catch((err) => {
+                console.error("❌ Camera error:", err);
+                isCameraActive = false;
+                updateStatus();
+
+                let errorMessage = "Kamera ochishda xatolik: ";
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += "Kamera ruxsati berilmagan.";
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage += "Kamera topilmadi.";
+                } else {
+                    errorMessage += err.message;
+                }
+                alert(errorMessage);
+            });
+        }
+
+        // 🖼️ Suratni olish
+        function captureToBase64() {
+            if (!isCameraActive || !video) {
+                alert("Kamera faol emas.");
+                return null;
+            }
+
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const imageData = canvas.toDataURL("image/jpeg", 0.8);
+                console.log("📸 Surat olindi");
+                return imageData;
+
+            } catch (err) {
+                console.error("❌ Surat olishda xatolik:", err);
+                alert("Suratni olishda xatolik");
+                return null;
+            }
+        }
+
+        // 📤 Davomat qilish
+        async function captureAndSend() {
+            console.log("🎯 Davomat qilinmoqda...");
+
+            if (!isCameraActive) {
+                alert("Iltimos, avval kamerni yoqing.");
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ Surat olinmoqda...</p>';
+
+            const imageData = captureToBase64();
+            if (!imageData) return;
+
+            resultDiv.innerHTML = '<p>⏳ Yuzni tanish jarayonda...</p>';
+
+            try {
+                const response = await fetch('/process_attendance/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `image=${encodeURIComponent(imageData)}`
+                });
+
+                const data = await response.json();
+                console.log("📊 Server javobi:", data);
+
+                if (data.status === 'success') {
+                    resultDiv.innerHTML = `
+                        <div style="color: green; font-weight: bold;">
+                            ✅ ${data.action} - ${data.employee_name}
+                        </div>
+                        <div style="font-size: 14px;">
+                            Masofa: ${data.distance} | Vaqt: ${data.processing_time}s
+                        </div>
+                    `;
+                } else if (data.status === 'no_match') {
+                    resultDiv.innerHTML = `
+                        <div style="color: orange; font-weight: bold;">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="color: red; font-weight: bold;">
+                            ❌ ${data.message}
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                console.error('❌ Server xatosi:', error);
+                resultDiv.innerHTML = '<div style="color: red;">❌ Server xatosi</div>';
+            }
+        }
+
+        // 🛑 Kamerani to'xtatish
+        function stopWebcam() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (video) {
+                video.srcObject = null;
+            }
+            isCameraActive = false;
+            updateStatus();
+            console.log("🛑 Kamera to'xtatildi");
+        }
+
+        // 🔄 Qayta ishga tushirish
+        function restartWebcam() {
+            stopWebcam();
+            setTimeout(startWebcam, 500);
+        }
+
+        // 📊 Status yangilash
         function updateStatus() {
             const statusDiv = document.getElementById('status');
             if (statusDiv) {
-                if (window.isCameraActive) {
+                if (isCameraActive) {
                     statusDiv.innerHTML = '🟢 Kamera faol - Davomat qilish uchun tugmani bosing';
                     statusDiv.className = 'status status-active';
                 } else {
-                    statusDiv.innerHTML = '🔴 Kamera faol emas - "Kamerni Yoqish" tugmasini bosing';
+                    statusDiv.innerHTML = '🔴 Kamera faol emas';
                     statusDiv.className = 'status status-inactive';
                 }
             }
         }
 
-        // Har 3 sekundda status yangilash
+        // Tugmalarni bog'lash
+        document.getElementById('startBtn').addEventListener('click', startWebcam);
+        document.getElementById('captureBtn').addEventListener('click', captureAndSend);
+        document.getElementById('restartBtn').addEventListener('click', restartWebcam);
+        document.getElementById('stopBtn').addEventListener('click', stopWebcam);
+
+        // Sahifa yuklanganda
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("✅ Capture sahifasi yuklandi");
+        });
+
+        // Status yangilash
         setInterval(updateStatus, 3000);
     </script>
 </body>
